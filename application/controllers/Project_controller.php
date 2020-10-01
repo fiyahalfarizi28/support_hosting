@@ -220,7 +220,7 @@ class Project_controller extends CI_Controller {
         $SESSION_USER_ID = $this->session->userdata('USER_ID');
         $date_now = date('Y-m-d H:i:s');
         $table_destination = TB_TASK;
-        $extensionList = array("jpg", "jpeg", "png", "bmp", "gif", "JPG", "JPEG", "PNG", "BMP", "GIF", "pdf", "docx", "xlsx", "pptx", "txt", "TXT");
+        $extensionList = array("jpg", "jpeg", "png", "bmp", "gif", "JPG", "JPEG", "PNG", "BMP", "GIF", "pdf", "doc", "docx", "xls", "xlsx", "pptx", "txt", "TXT");
 
         $specificTask = $this->input->post('specificTask');
         $deskripsi = $this->input->post('deskripsi');
@@ -252,7 +252,7 @@ class Project_controller extends CI_Controller {
 
             $array_insert = array(
                 'project_name'      => $new_project,
-                'description'        => $description,
+                'description'       => $description,
                 'create_by'         => $SESSION_USER_ID,
                 'create_date'       => $date_now,
                 'last_update'       => $date_now,
@@ -408,9 +408,9 @@ class Project_controller extends CI_Controller {
         $array_crud = array(
             'table' => TB_USER,
             'where' => array(
-                'group_menu' => 'IT',
+                'jabatan' => 'IT STAFF',
                 'flg_block' => 'N',
-                )
+            )
         );
         $data['select_pic'] = $this->rfp_model->get_crud($array_crud);
 

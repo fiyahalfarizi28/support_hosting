@@ -59,6 +59,53 @@ $(document).ready(function(){
             tr.addClass('shown');
         }
     });
+
+    var tb_history_rfm = $('#tb_history_rfm').DataTable({ 
+        "bSort" : false,
+        "processing": true, 
+        "serverSide": true,
+        "buttons": [
+            'excelHtml5',
+        ],
+         
+        "ajax": {
+            "url": "historyrfm_controller/get_tb_detail",
+            "type": "POST"
+        },
+
+        "columns": [
+            {
+                "className":      'details-control',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": '',
+            },
+            { "data": "0" },
+            { "data": "18" },
+            { "data": "1" },
+            { "data": "2" },
+            { "data": "3" },
+            { "data": "4" },
+            { "data": "5" },
+            { "data": "6" },
+        ],
+        "order": []
+
+    });
+
+    $('#tb_history_rfm tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = tb_history_rfm.row( tr );
+ 
+        if ( row.child.isShown() ) {
+            row.child.hide();
+            tr.removeClass('shown');
+        }
+        else {
+            row.child( format_history_rfm(row.data()) ).show();
+            tr.addClass('shown');
+        }
+    });
     
     //RFP==========================
     var tb_detail_rfp = $('#tb_detail_rfp').DataTable({ 
@@ -109,6 +156,53 @@ $(document).ready(function(){
         }
     });
 
+    var tb_history_rfp = $('#tb_history_rfp').DataTable({ 
+        "bSort" : false,
+        "processing": true, 
+        "serverSide": true,
+        "buttons": [
+            'excelHtml5',
+        ],
+         
+        "ajax": {
+            "url": "historyrfp_controller/get_tb_detail",
+            "type": "POST"
+        },
+
+        "columns": [
+            {
+                "className":      'details-control',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": '',
+            },
+            { "data": "0" },
+            { "data": "18" },
+            { "data": "1" },
+            { "data": "2" },
+            { "data": "3" },
+            { "data": "4" },
+            { "data": "5" },
+            { "data": "6" },
+        ],
+        "order": []
+
+    });
+
+    $('#tb_history_rfp tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = tb_history_rfp.row( tr );
+ 
+        if ( row.child.isShown() ) {
+            row.child.hide();
+            tr.removeClass('shown');
+        }
+        else {
+            row.child( format_history_rfp(row.data()) ).show();
+            tr.addClass('shown');
+        }
+    });
+    
     //USER MANAGEMENT====================
     var table = $('#tb_user').DataTable({ 
         "bSort" : false,
@@ -395,6 +489,7 @@ function bell() {
 function reload_table(){
     $('#tb_detail').DataTable().ajax.reload(null, false);
     $('#tb_detail_rfp').DataTable().ajax.reload(null, false);
+    $('#tb_history_rfm').DataTable().ajax.reload(null, false);
     bell();
 }
 
@@ -459,6 +554,74 @@ function format_tb_detail(row)
         '<tr>'+
             '<td width="10px">Rating</td>'+
             '<td>'+row[12]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">Option</td>'+
+            '<td>'+row[6]+'</td>'+
+        '</tr>'+
+    '</table>';
+}
+
+function format_history_rfm(row)
+{
+    return '<table width="100%" cellspacing="0" border="0">'+
+        '<tr class="res-mob">'+
+            '<td width="10px">No.Rfm</td>'+
+            '<td>'+row[2]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Type</td>'+
+            '<td>'+row[7]+' ('+row[8]+')</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Application</td>'+
+            '<td>'+row[19]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Subject</td>'+
+            '<td>'+row[9]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Detail</td>'+
+            '<td>'+row[10]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Approve Notes</td>'+
+            '<td>'+row[12]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">IT Notes</td>'+
+            '<td>'+row[13]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">PIC Notes</td>'+
+            '<td>'+row[14]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Reject Notes</td>'+
+            '<td>'+row[15]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Confirm Notes</td>'+
+            '<td>'+row[16]+'</td>'+
+        '</tr>'+
+
+        //MOBILE VIEW
+        '<tr class="res-mob">'+
+            '<td width="10px">Time</td>'+
+            '<td>'+row[3]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">Status</td>'+
+            '<td>'+row[4]+' - '+row[5]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">PIC</td>'+
+            '<td>'+row[6]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Rating</td>'+
+            '<td>'+row[11]+'</td>'+
         '</tr>'+
         '<tr class="res-mob">'+
             '<td width="10px">Option</td>'+
@@ -527,6 +690,74 @@ function format_tb_detail_rfp(row)
         '<tr>'+
             '<td width="10px">Rating</td>'+
             '<td>'+row[12]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">Option</td>'+
+            '<td>'+row[7]+'</td>'+
+        '</tr>'+
+    '</table>';
+}
+
+function format_history_rfp(row)
+{
+    return '<table width="100%" cellspacing="0" border="0">'+
+        '<tr class="res-mob">'+
+            '<td width="10px">No.Rfp</td>'+
+            '<td>'+row[2]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Type</td>'+
+            '<td>'+row[7]+' ('+row[8]+')</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Application</td>'+
+            '<td>'+row[19]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Subject</td>'+
+            '<td>'+row[9]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Detail</td>'+
+            '<td>'+row[10]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Approve Notes</td>'+
+            '<td>'+row[12]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">IT Notes</td>'+
+            '<td>'+row[13]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">PIC Notes</td>'+
+            '<td>'+row[14]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Reject Notes</td>'+
+            '<td>'+row[15]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Confirm Notes</td>'+
+            '<td>'+row[16]+'</td>'+
+        '</tr>'+
+
+        //MOBILE VIEW
+        '<tr class="res-mob">'+
+            '<td width="10px">Time</td>'+
+            '<td>'+row[3]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">Status</td>'+
+            '<td>'+row[4]+' - '+row[5]+'</td>'+
+        '</tr>'+
+        '<tr class="res-mob">'+
+            '<td width="10px">PIC</td>'+
+            '<td>'+row[6]+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td width="10px">Rating</td>'+
+            '<td>'+row[11]+'</td>'+
         '</tr>'+
         '<tr class="res-mob">'+
             '<td width="10px">Option</td>'+
@@ -954,18 +1185,19 @@ function post_assign_task() {
 //-------------------------------------
 
 function export_to_excel() {
+    var request_type = $('select[name="request_type"]').val();
     var tanggal_awal = $("#tanggal_awal").val();
     var tanggal_akhir = $("#tanggal_akhir").val();
     var request_status = $('select[name="request_status"]').val();
 
-    if (tanggal_awal == "" || tanggal_akhir == "" || request_status == null)
+    if (request_type == null ||tanggal_awal == "" || tanggal_akhir == "" || request_status == null)
     {
-        alert('Harap isi Tanggal Awal, Tanggal Akhir dan Request Status!');
+        alert('Harap isi Request, Tanggal Awal, Tanggal Akhir dan Request Status!');
     } else if (tanggal_akhir < tanggal_awal)
     {
         alert('Input Tanggal Akhir Salah!');
     } else {
-    window.open('rfm_controller/export_to_excel/'+tanggal_awal+'/'+tanggal_akhir+'/'+request_status);
+    window.open('reportrfm_controller/export_to_excel/'+request_type+'/'+tanggal_awal+'/'+tanggal_akhir+'/'+request_status);
     }
 }
 //-------------------------------------

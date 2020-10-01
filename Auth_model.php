@@ -9,7 +9,7 @@ class Auth_model extends ci_model {
     function logged_id() {
         return $this->session->userdata('USER_ID');
 	}
-    
+
 	function check_login($field1, $field2) {
 		$this->db->from($this->table);
 		$this->db->where($field1);

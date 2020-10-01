@@ -20,6 +20,13 @@ class Dailyreport_controller extends ci_controller{
 
             $data['rfmList'] = $this->rfm_model->get_crud($array_crud);
 
+            $array_crud = array(
+                'select' => '*',
+                'table' => TB_DETAIL,
+            );
+
+            $data['statusList'] = $this->rfm_model->get_crud($array_crud);
+
             $data['ITList'] = $this->db->where('divisi_id', 'IT')->get(TB_USER)->result();
 
 			$array_crud = array(
@@ -95,6 +102,7 @@ class Dailyreport_controller extends ci_controller{
             'table' => TB_TASK,
             'where' => array(
                 'assign_to' => $this->session->userdata('USER_ID'),
+                'status !='    => STT_DONE,
             )
         );
 
@@ -134,15 +142,40 @@ class Dailyreport_controller extends ci_controller{
 		
         $date_now = date('Y-m-d H:i:s');
         $user_id = $this->session->userdata('USER_ID');
-        $activity = $this->input->post('activity');
+        $project_id = null;
+        $task_id = null;
+        $rfm_id = null;
+        $done_notes = null;
+        $comment = null;
         $status = $this->input->post('status');
+        $keterangan = $this->input->post('keterangan');
         
-        if(empty($activity) ) {
+        if ($this->input->post('project_id') !== "") {
+            $project_id = $this->input->post('project_id');
+        }
+
+        if ($this->input->post('task_id') !== "") {
+            $task_id = $this->input->post('task_id');
+        }
+
+        if ($this->input->post('rfm_id') !== "") {
+            $rfm_id = $this->input->post('rfm_id');
+        }
+
+        if ($this->input->post('notes') !== "") {
+            $done_notes = $this->input->post('notes');
+        }
+
+        if ($this->input->post('penyelesaian') !== "") {
+            $comment = $this->input->post('penyelesaian');
+        }
+
+        if(empty($project_id) && empty($rfm_id) && empty($keterangan) ) {
             $isValid = 0;
-            $isPesan = "<div class='alert alert-danger'>Aktivitas Harus Diisi !!!</div>";
+            $isPesan = "<div class='alert alert-danger'>Pilih Jenis Task!!!</div>";
         } elseif(empty($status)) {
             $isValid = 0;
-            $isPesan = "<div class='alert alert-danger'>Status Aktivitas Harus Diisi !!!</div>";
+            $isPesan = "<div class='alert alert-danger'>Status Harus Diisi !!!</div>";
         } else {
             $array_crud = array(
                 'table' => TB_DAILY_ACTIVITY,
@@ -152,16 +185,110 @@ class Dailyreport_controller extends ci_controller{
                 )
             );
             $sql = $this->rfm_model->get_crud($array_crud);
-            
+
+            if (!empty($task_id)) {
+                $array_update_task = array(
+                    'status'            => $status,
+                    'update_by'         => $this->session->userdata('USER_ID'),
+                    'last_update'       => $date_now,
+                );
+    
+                $this->db->where('id', $task_id);
+                $update_task = $this->db->update(TB_TASK, $array_update_task);
+
+                $array_update_project = array(
+                    'last_update' => $date_now,
+                );
+    
+                $this->db->where('id', $project_id);
+                $update_project = $this->db->update(TB_PROJECT, $array_update_project);
+
+                $no_rfp = $this->db->where('id', $task_id)->get(TB_TASK)->row()->no_rfp;
+            }
+
+            if ($status == STT_DONE)
+            {
+                $array_update_task = array(
+                    'update_by'         => $this->session->userdata('USER_ID'),
+                    'done_date'         => $date_now,
+                    'last_update'       => $date_now,
+                );
+    
+                $this->db->where('id', $task_id);
+                $update_task = $this->db->update(TB_TASK, $array_update_task);
+                
+                $array_update_rfm = array(
+                    'result_status' => $status,
+                    'done_notes'    => $done_notes,
+                    'done_date'     => $date_now,
+                    'request_status' => STT_CONFIRMED,
+                );
+    
+                $this->db->where('id', $rfm_id);
+                $update_rfm = $this->db->update(TB_DETAIL, $array_update_rfm);
+            }
+
             $array_insert = array(
                 'user_id'       => $user_id,
                 'date_activity' => $date_now,
+                'project_id'    => $project_id,
+                'task_id'       => $task_id,
+                'rfm_id'        => $rfm_id,
                 'status'        => $status,
-                'keterangan' 	=> $activity,
+                'keterangan' 	=> $keterangan,
                 'update_by'     => $user_id,
             );
         
             $insert_data = $this->db->insert(TB_DAILY_ACTIVITY, $array_insert);
+
+            $array_update_rfm = array(
+                'result_status' => $status,
+                'onprogress_date' => $date_now,
+            );
+
+            $this->db->where('id', $rfm_id);
+            $update_rfm = $this->db->update(TB_DETAIL, $array_update_rfm);
+
+            if (!empty($comment) && $status == STT_DONE) {
+                if (!empty($rfm_id)) {
+                    // TODO: Check row in tb comment, if null then insert, if not null then update comment
+                    $array_crud = array(
+                        'table' => TB_COMMENT_RFM,
+                        'where' => array(
+                            'id' => $rfm_id,
+                        )
+                    );
+                    
+                    $check = $this->rfm_model->get_crud($array_crud)->num_rows();
+    
+                    if ($check != 0) {
+                        $array_update_comment = array(
+                            'date_comment' => $date_now,
+                            'user'          => $user_id,
+                            'comment'       => $comment
+                        );
+
+                        $this->db->where('id', $rfm_id);
+
+                        $update_comment = $this->db->update( TB_COMMENT_RFM, $array_update_comment);
+
+                    } else {
+                        $array_insert_comment = array(
+                            'id'            => $rfm_id,
+                            'date_comment'  => $date_now,
+                            'user'          => $user_id,
+                            'comment'       => $comment
+                        );
+
+                        $insert_comment = $this->db->insert(TB_COMMENT_RFM, $array_insert_comment);
+                    }
+
+                }
+            
+            } else if(empty($comment) && $status == STT_DONE) {
+                $isValid = 0;
+                $isPesan = "<div class='alert alert-danger'>Case Penyelesaian Harus Diisi !!!</div>";
+            }
 
             if(!$insert_data) {
                 $isValid = 0;

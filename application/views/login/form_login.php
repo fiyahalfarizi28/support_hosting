@@ -43,7 +43,7 @@
                                 <div class="d-sm-flex justify-content-between">
                                     
                                     <div class="field-wrapper">
-                                    <a href="javascript:void(0)" onclick="proses_login()" style="background-color: #c40202; margin-top: 8px" class="btn btn-primary" id="btn_login" value="">Log in</a>
+                                    <a href="javascript:void(0)" onclick="proses_login()" style="background-color: #c40202; margin-top: 8px; margin-left: 100px" class="btn btn-primary" id="btn_login" value="">Log in</a>
                                     </div>
                                 </div>
                             </div>

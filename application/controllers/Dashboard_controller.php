@@ -140,7 +140,21 @@ class Dashboard_controller extends CI_Controller {
 
             //===================================================
 
-                
+            $tb_detail = TB_DETAIL;
+            $Q = "SELECT DISTINCT MONTH(`request_date`) AS bulan FROM `rfm_new_detail` WHERE YEAR(`request_date`) BETWEEN '2019' AND YEAR(CURDATE()) ORDER BY MONTH(`request_date`) ASC";
+            $data['query'] = $this->db->query($Q)->result();
+        
+            $Q = "SELECT DISTINCT YEAR(`request_date`) AS tahun 
+                    FROM $tb_detail";
+            $data['queryyear'] = $this->db->query($Q)->result();
+            
+            //===================================================
+
+            $data['applicationList'] = $this->db->get(TB_PROJECT)->result();
+            
+            $data['problemTypeList'] = $this->db->get(TB_PROBLEM_TYPE)->result();
+
+            $data['userList'] = $this->db->get(TB_USER)->result();
 
             $this->template->load('template','dashboard/dashboard',$data);
 
@@ -151,7 +165,5 @@ class Dashboard_controller extends CI_Controller {
         }
 
     }
-
-
 
 }

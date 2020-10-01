@@ -295,7 +295,6 @@
 															<td><?php echo date("H:i",strtotime( $row->last_update)) ?></td>
 															<td>
 																<?php 
-																	// $projectList = $this->db->get(TB_PROJECT)->result();
 																	$tableDataProjectName = null;
 																	if (!empty($row->project_id))
 																	{
@@ -313,23 +312,24 @@
 																?>
 															</td>
 															<td>
-																<?php 
-																	$tableTaskName = null;
-																	if (!empty($row->task_id))
-																	{
-																		
-																		foreach($DataTaskList as $rowTask):
-																			if ($row->task_id == $rowTask->id) {
-																				$tableTaskName = $rowTask->task_name;
-																				break;
-																			}
-																		endforeach;
-																	}
-																	else {
-																		$tableTaskName = "-";
-																	}
-																	echo $tableTaskName;
-																?>
+															<?php 
+																$taskList = $this->db->get(TB_TASK)->result();
+																$tableTaskName = null;
+
+																if (!empty($row->task_id))
+																{
+																	foreach($taskList as $rowTask):
+																		if ($row->task_id == $rowTask->id) {
+																			$tableTaskName = $rowTask->task_name;
+																			break;
+																		}
+																	endforeach;
+																}
+																else {
+																	$tableTaskName = "-";
+																}
+																echo $tableTaskName;
+                                                        	?>
 															</td>
 															<td>
 																<?php $tableDataNoRFM = null;

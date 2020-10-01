@@ -54,7 +54,16 @@
                                 echo $r->detail;
                             ?>
                         </td>
-                        <td><?php echo date("d-m-Y",strtotime( $r->target_date))?></td>
+                        <td>
+                            <?php 
+                            if ($r->target_date != NULL)
+                            {
+                                echo date("d-m-Y",strtotime( $r->target_date));
+                            } else {
+                                echo "-";
+                            }
+                            ?>
+                            </td>
                         <td>
                             <?php
                                 echo $r->status;

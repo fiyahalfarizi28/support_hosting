@@ -21,10 +21,16 @@
                 </select>
             </div>
 
+            
             <div class="col-md-6">
                 <label>TARGET DATE</label>
-                <input type="text" name="target_date" class="form-control" value="<?php echo date("d-m-Y",strtotime( $rows->target_date)) ?>" required <?php echo $readonly ?>>
+                <?php if ($rows->target_date != NULL) { ?>
+                    <input type="text" name="target_date" class="form-control" value="<?php echo date("d-m-Y",strtotime( $rows->target_date)) ?>" required <?php echo $readonly ?>>
+                <?php } else { ?>
+                    <input type="text" name="target_date" class="form-control" value="-" required <?php echo $readonly ?>>
+                <?php } ?>
             </div>
+            
         </div>
 
         <div class="form-group">

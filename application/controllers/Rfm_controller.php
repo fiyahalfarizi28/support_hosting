@@ -416,7 +416,7 @@ class Rfm_controller extends CI_Controller {
         $array_crud = array(
             'table' => TB_USER,
             'where' => array(
-                'group_menu' => 'IT',
+                'jabatan' => 'IT STAFF',
                 'flg_block' => 'N',
                 )
         );
@@ -1107,9 +1107,9 @@ class Rfm_controller extends CI_Controller {
                 'request_type'      => $request_type,
                 'request_by'        => $user_id,
                 'request_date'      => $date_now,
-                'request_upline_by' => $app_it->value,
+                'request_upline_by' => $app_it,
                 'approve_date'      => $date_now,
-                'receive_by'        => $app_it->value,
+                'receive_by'        => $app_it,
                 'kode_kantor'       => $kode_cabang,
                 'subject'           => $subject,
                 'rfm_detail'        => $detail,
@@ -1678,7 +1678,7 @@ class Rfm_controller extends CI_Controller {
                 'assign_to' => $assign_to,
                 'assign_date' => $assign_date,
                 'project_id' => $project_id,
-		'risk_type'         => $risk_type,
+		        'risk_type'         => $risk_type,
             );
             $this->db->where('id', $id_rfm);
             $insert_data = $this->db->update(TB_DETAIL, $array_insert);
@@ -1710,7 +1710,7 @@ class Rfm_controller extends CI_Controller {
         $date_now = date('Y-m-d H:i:s');
         $app_it = $this->db->where('id', 'RFM_AKSES_IT_APP')->get(TB_PARAMETER)->row();
         $problem_type = $this->input->post('problem_type');
-        $project_id = $this->input->post('project_id');
+        $project_id = $this->input->post('project_id_hidden');
         $risk_type = null;
         if ($risk_type != NULL) {
             $risk_type = $this->input->post('risk_type');
@@ -1732,8 +1732,8 @@ class Rfm_controller extends CI_Controller {
                 'approve_notes'  => $notes,
                 'receive_by'     => $app_it->value,
                 'problem_type'   => $problem_type,
-		'project_id'     => $project_id,
-		'risk_type'	 => $risk_type,
+                'project_id'     => $project_id,
+                'risk_type'	    => $risk_type,
             );
             $insert_data = $this->db->where('id', $id_rfm)->update(TB_DETAIL, $array_insert);    
         
@@ -1805,7 +1805,7 @@ class Rfm_controller extends CI_Controller {
             'target_date'    => $target_date,
             'problem_type'   => $problem_type,
             'project_id'     => $project_id,
-	    'risk_type'      => $risk_type,
+	        'risk_type'      => $risk_type,
         );
         $insert_data = $this->db->where('id', $id_rfm)->update(TB_DETAIL, $array_insert);
 
@@ -1825,7 +1825,6 @@ class Rfm_controller extends CI_Controller {
                 'pesan'       => "Kerjakan case tersebut sebelum $target_date",
                 'via_android' => 1
             );
-            // $this->db->insert(TB_SYS_PESAN, $arr);
 
             $isValid = 1;
             $isPesan = "<div class='alert alert-success'>Berhasil Menyetujui RFM</div>";
@@ -2087,7 +2086,6 @@ class Rfm_controller extends CI_Controller {
             'table' => TB_DETAIL,
             'where' => array(
                     'request_status' => STT_ASSIGNED,
-                    'approve_by !=' => NULL,
                     'receive_by !=' => NULL,
                     'assign_to' => $SESSION_USER_ID,
                 )
@@ -2113,61 +2111,6 @@ class Rfm_controller extends CI_Controller {
         } else {
             echo $upline + $done;
         }
-    }
-
-    public function export_to_excel($first_date='', $second_date='', $request_status='')
-    {
-        $SESSION_USER_ID = $this->session->userdata('USER_ID');
-        $startDate = date('Y-m-d', strtotime($first_date));
-        $endDate = date('Y-m-d', strtotime($second_date));
-
-        if ($request_status != "SEMUANYA") {
-            $customStatus = "(RFM.request_date BETWEEN '$startDate' AND '$endDate') AND (RFM.request_status = '$request_status')";
-        } else {
-            $customStatus = "RFM.request_date BETWEEN '$startDate' AND '$endDate'";
-        }
-
-        if(!$SESSION_USER_ID)
-        {
-            redirect(base_url());
-        }
-
-        if (empty($first_date) || empty($second_date)) {
-            die();
-        }
-
-        $Q = "SELECT 
-                RFM.no_rfm AS `no_rfm`,
-                USER.nama AS `request_by`,
-                RFM.request_date  AS `date`,
-                PROJECT.project_name AS `project_name`,
-                PROBLEM_TYPE.`problem_type` AS `problem_type`,
-                RFM.`subject` AS `subject`,
-                RFM.rfm_detail AS `detail`,
-                RFM.request_status AS `status`,
-                PIC.nama AS `pic`
-            FROM
-                ticket_support.rfm_new_detail RFM
-                LEFT JOIN ticket_support.rfm_new_problem_type PROBLEM_TYPE
-                ON RFM.problem_type = PROBLEM_TYPE.id
-                LEFT JOIN ticket_support.project PROJECT
-                ON RFM.project_id = PROJECT.id
-                LEFT JOIN view_user USER
-                ON RFM.request_by = USER.user_id
-                LEFT JOIN view_user PIC
-                ON RFM.assign_to = PIC.user_id
-            WHERE
-                $customStatus
-            ORDER BY
-                RFM.request_date ASC
-        ";
-    
-        $data['row'] = $this->db->query($Q)->result();
-        $data['startDate'] = $startDate;
-        $data['endDate'] = $endDate;
-        $data['first_date'] = $first_date;
-        $data['second_date'] = $second_date;
-        $this->load->view('export_to_excel', $data);
     }
 
     public function getattachment() {

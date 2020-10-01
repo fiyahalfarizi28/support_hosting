@@ -1,8 +1,8 @@
 <?php
-class Rfm_model extends ci_model{
+class Historyrfp_model extends ci_model{
     var $table = TB_DETAIL;
     var $column_order = array(null, 'id');
-    var $column_search = array('id', 'no_rfm', 'request_status', 'result_status');
+    var $column_search = array('id', 'no_rfp', 'request_status', 'result_status');
     var $order = array('jumlah' => 'asc');
 
     private function _get_datatables_query($SESSION_UPLINE)
@@ -20,50 +20,27 @@ class Rfm_model extends ci_model{
         $qry = "*,
             CASE
                 WHEN
-			assign_to = '$SESSION_USER_ID' 
-                        AND request_status = 'ASSIGNED'
-		THEN 1
-		WHEN
-                    (
-                        request_upline_by = '$SESSION_USER_ID'
-                        AND request_status = 'ON QUEUE'
-                    )
-                    OR
-                    (
-                        request_upline_by = '$SESSION_UPLINE'
-                        AND request_status = 'ON QUEUE'
-                    )
-                    OR (
-                        receive_by = '$SESSION_UPLINE' 
-                        AND request_status = 'APPROVED'
-                    ) 
+                        request_by = '$SESSION_USER_ID'
+                        AND request_status = 'DONE'
+                    THEN 1
+                    WHEN
+                        request_by = '$SESSION_USER_ID'
+                        AND request_status = 'REJECT'
                     THEN 2
-                    WHEN
-                        receive_by = '$SESSION_USER_ID'
-                        AND request_status = 'APPROVED'
-                    THEN 3
-                    WHEN
-                        request_by = '$SESSION_USER_ID'
-                        AND request_status = 'CONFIRMED'
-                        AND result_status = 'DONE'
-                    THEN 4
-                    WHEN
-                        request_by = '$SESSION_USER_ID'
-                        AND request_status NOT IN('REJECT', 'DONE')
-                    THEN 5
-                    WHEN
-                        request_by != '$SESSION_USER_ID'
-                        AND request_status IN ('ASSIGNED')
-                    THEN 6
             ELSE 99 
             END AS jumlah
         ";
         $this->db->select($qry);
-        $this->db->from('view_rfm_new_detail');
+        $this->db->from('view_rfp_new_detail');
+        $this->db->order_by('request_date DESC');
 
         if(empty($_POST['search']['value'])) {
-            $this->db->where('request_status !=', STT_DONE);
-            $this->db->where('request_status !=', STT_REJECT);
+            $this->db->where('request_by',  $SESSION_USER_ID);
+            $this->db->where('request_status !=', STT_ON_QUEUE);
+            $this->db->where('request_status !=', STT_APPROVED);
+            $this->db->where('request_status !=', STT_ASSIGNED);
+            $this->db->where('request_status !=', STT_CONFIRMED);
+
         }
         
         $i = 0;

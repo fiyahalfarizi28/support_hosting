@@ -2,7 +2,7 @@
 
     header("Content-type: application/vnd-ms-excel");
 
-    header("Content-Disposition: attachment; filename=IT_MAN -SUPPORT-RFM-".date("(d-m-Y)", strtotime($first_date))." sd ".date("(d-m-Y)", strtotime($second_date)).".xls");
+    header("Content-Disposition: attachment; filename=IT_MAN -SUPPORT-RFP-".date("(d-m-Y)", strtotime($first_date))." sd ".date("(d-m-Y)", strtotime($second_date)).".xls");
 
 ?>
 
@@ -12,7 +12,7 @@
 
     <head>
 
-        <title>RFM</title>
+        <title>RFP</title>
 
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -30,7 +30,7 @@
 
             <tr>
 
-                <th>NO RFM</th>
+                <th>NO RFP</th>
 
                 <th>REQUEST BY</th>
 
@@ -45,6 +45,9 @@
                 <th>DETAIL</th>
 
                 <th>STATUS</th>
+
+                <th>PIC</th>
+
                 
 
             <?php
@@ -53,7 +56,7 @@
 
                     echo "<tr>";
 
-                    echo "<td>".$r->no_rfm."</td>";
+                    echo "<td>".$r->no_rfp."</td>";
 
                     echo "<td>".$r->request_by."</td>";
 
@@ -69,8 +72,6 @@
 
                     echo "<td>".$r->status."</td>";
 
-                    echo !empty($r->pic) ? "<td>".$r->pic."</td>" : "<td>-</td>";
-
                     echo "</tr>";
 
                 endforeach;
@@ -78,8 +79,6 @@
             ?>
 
         </table>
-
-    
 
     </body>
 

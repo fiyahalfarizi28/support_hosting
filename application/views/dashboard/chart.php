@@ -1,4 +1,12 @@
 <?php
+    $tb_detail = TB_DETAIL;
+    $Q = "SELECT DISTINCT MONTH(`request_date`) AS bulan FROM `rfm_new_detail` WHERE YEAR(`request_date`) BETWEEN '2019' AND YEAR(CURDATE()) ORDER BY MONTH(`request_date`) ASC";
+    $query = $this->db->query($Q)->result();
+    
+    $Q = "SELECT DISTINCT YEAR(`request_date`) AS tahun 
+            FROM $tb_detail";
+    $queryyear = $this->db->query($Q)->result();
+    
     $post_month = $this->input->post('month');
     $post_monthAwal = $this->input->post('monthAwal');
     $post_monthAkhir = $this->input->post('monthAkhir');
@@ -175,18 +183,16 @@
     });
 </script>
 
-
-
 <script src="<?php echo base_url('assets/js/chart/Chart.bundle.js') ?>"></script>
 
 <div class="row mt-3">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <b>PERSENTASE RFM BERDASARKAN APLIKASI</b>
+                <b>PERSENTASE RFM BERDASARKAN KANTOR</b>
             </div>
             <div class="card-body">
-                <canvas id="myChart1"></canvas>
+                <canvas id="myChart5"></canvas>
             </div>
         </div>
     </div>
@@ -194,10 +200,10 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <b>PERSENTASE RFM BERDASARKAN PROBLEM TYPE</b>
+                <b>PERSENTASE RFM BERDASARKAN AREA</b>
             </div>
             <div class="card-body">
-                <canvas id="myChart2"></canvas>
+                <canvas id="myChart6"></canvas>
             </div>
         </div>
     </div>
@@ -207,10 +213,10 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <b>PERSENTASE RFP BERDASARKAN APLIKASI</b>
+                <b>PERSENTASE RFM BERDASARKAN DIVISI</b>
             </div>
             <div class="card-body">
-                <canvas id="myChart3"></canvas>
+                <canvas id="myChart7"></canvas>
             </div>
         </div>
     </div>
@@ -218,17 +224,27 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <b>PERSENTASE RFP BERDASARKAN REQUEST TYPE</b>
+                <b>PERSENTASE RFP BERDASARKAN DIVISI</b>
             </div>
             <div class="card-body">
-                <canvas id="myChart4"></canvas>
+                <canvas id="myChart8"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+
     <?php
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(request_date)", $val_tahun);
+        }
+        $rfmList = $this->db->join(TB_KODE_KANTOR, TB_KODE_KANTOR.".kode_kantor=".TB_DETAIL.".kode_kantor")->where('request_status !=', STT_ON_QUEUE)->where('request_status !=', STT_REJECT)->get(TB_DETAIL)->result();
+
+        $this->db->select("COUNT(rfm_new_detail.kode_kantor) AS total_by_kk, view_app_kode_kantor.nama_kantor AS nama_kantor");
+        $this->db->join(TB_KODE_KANTOR." as view_app_kode_kantor", "view_app_kode_kantor.kode_kantor = rfm_new_detail.kode_kantor");
         $this->db->where('request_status !=', STT_ON_QUEUE);
         $this->db->where('request_status !=', STT_REJECT);
         if(!empty($post_monthAwal && $post_monthAkhir)) {
@@ -236,28 +252,17 @@
             $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
             $this->db->where("YEAR(request_date)", $val_tahun);
         }
-        $this->db->join(TB_PROJECT." as Project", "Project.id = rfm_new_detail.project_id");
-        $rfmList = $this->db->get(TB_DETAIL)->result();
-        
-        
-        $this->db->select("COUNT(*) AS jmlh_rfm");
-        $this->db->where('request_status !=', STT_ON_QUEUE);
-        $this->db->where('request_status !=', STT_REJECT);
-        if(!empty($post_monthAwal && $post_monthAkhir)) {
-            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
-            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
-            $this->db->where("YEAR(request_date)", $val_tahun);
-        }
-        $jmlah_rfm = $this->db->get(TB_DETAIL)->row()->jmlh_rfm;
+        $this->db->group_by('rfm_new_detail.kode_kantor');
+        $rfmGrouped = $this->db->get(TB_DETAIL)->result();
     ?>
 
-    var ctx_ = document.getElementById("myChart1").getContext("2d");
+    var ctx_ = document.getElementById("myChart5").getContext("2d");
     var data_ = {
         labels: [
-            <?php
-                foreach($applicationList as $r):
+            <?php 
+                foreach($rfmGrouped as $r):
                     $data = array();
-                    $data = $r->project_name;
+                    $data = $r->nama_kantor;
                     echo json_encode($data).",";
                 endforeach;
             ?>
@@ -266,429 +271,9 @@
         [{
             data: [
                 <?php
-                    foreach($applicationList as $r):
+                    foreach($rfmGrouped as $r):
                         $data = array();
-                        $counter = 0;
-                        foreach($rfmList as $eachrfm):
-                            if ($eachrfm->project_id == $r->id) {
-                                $counter += 1;
-                            }
-                        endforeach;
-                        $data = $counter;
-                        echo json_encode($data).",";
-                    endforeach;
-
-                ?>
-
-                
-            ],
-            backgroundColor: [
-                "rgb(240, 185, 185)",
-                "rgb(192, 209, 157)",
-                "rgb(247, 217, 121)",
-                "rgb(147, 230, 218)",
-                "rgb(240, 203, 161)",
-                "rgb(247, 183, 166)",
-                "rgb(219, 162, 199)",
-                "rgb(141, 207, 136)",
-                "rgb(209, 118, 88)",
-                "rgb(163, 163, 163)",
-                "rgb(247, 201, 89)",
-                "rgb(68, 124, 158)",
-                "rgb(78, 245, 197)",
-                "rgb(158, 143, 186)",
-                "rgb(250, 187, 135)",
-                "rgb(247, 227, 126)",
-                "rgb(247, 197, 188)",
-                "rgb(166, 88, 86)",
-                "rgb(247, 205, 181)",
-                "rgb(255, 203, 134)",
-                "rgb(201, 197, 143)",
-                "rgb(240, 185, 185)",
-                "rgb(192, 209, 157)",
-                "rgb(247, 217, 121)",
-                "rgb(147, 230, 218)",
-                "rgb(240, 203, 161)",
-                "rgb(247, 183, 166)",
-                "rgb(219, 162, 199)",
-                "rgb(141, 207, 136)",
-                "rgb(209, 118, 88)",
-                "rgb(163, 163, 163)",
-                ],
-                hoverBackgroundColor: 'rgb(187,185,190)',
-                hoverBorderColor: 'rgb(0, 0, 0, 1)',
-        }]
-    };
-    var myBarChartApplication = new Chart(ctx_, {
-        type: 'pie',
-        data: data_,
-        options: {
-            legend: {
-                display: false
-            },
-            'onClick' : function (evt, item) {
-                $('#tableRfm').empty();
-                
-                var label = this.data.labels[item[0]["_index"]];
-                var rfmList = <?php echo json_encode($rfmList); ?>;
-                var userList = <?php echo json_encode($userList); ?>;
-
-                
-                rfmList.forEach( (rfm) => {
-                    if (rfm.project_name == label) {
-                        var nama_requestor;
-                        var jabatan_requestor;
-                        var nama_pic = "-";
-                        var date = new Date(rfm.request_date);
-                        var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
-
-                        userList.forEach( (user) => {
-                            if (rfm.request_by == user.user_id) {
-                                nama_requestor = user.nama;
-                                jabatan_requestor = user.jabatan;
-                            }
-
-                            if (rfm.assign_to == user.user_id) {
-                                nama_pic = user.nama;
-                            }
-                        })
-
-
-                        $('#tableRfm').append(`
-                            <tr>
-                                <td>
-                                    ${nama_requestor}
-                                </td>
-                                <td>
-                                    ${jabatan_requestor}
-                                </td>
-                                <td>
-                                    ${rfm.no_rfm}
-                                </td>
-                                <td>
-                                    ${formattedDate}
-                                </td>
-                                <td>
-                                    ${rfm.request_status}
-                                </td>
-                                <td>
-                                    ${rfm.result_status}
-                                </td>
-                                <td>
-                                    ${nama_pic}
-                                </td>
-                            </tr>
-                        `);
-
-                    }
-                })
-
-                $('#modal-Chart1').modal('show');
-
-            },            
-            responsive: true,
-            title:{
-                display:true,
-                text:'Application Chart | Total RFM : <?php echo $jmlah_rfm;?>'
-                
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                    var dataLabel = data.labels[tooltipItem.index];
-                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
-                    if (Chart.helpers.isArray(dataLabel)) {
-                        dataLabel = dataLabel.slice();
-                        dataLabel[0] += value;
-                    } else {
-                        dataLabel += value;
-                    }
-                    return dataLabel;
-                    }
-                }
-            }
-        }
-    });
-
-</script>
-
-<div class="modal fade" id="modal-Chart1" role="dialog">
-    <div class="modal-dialog modal-lg" style="margin-left: 180px">
-        <div class="modal-content" style="width:1000px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Detail RFM</h3>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-
-            <div class="modal-body">
-                <table style="margin-left: auto; margin-right: auto">
-                    <thead class ="table">
-                        <tr>
-                            <th>REQUEST BY</th>
-                            <th>JABATAN</th>
-                            <th>NO.RFM</th>
-                            <th>DATE</th>
-                            <th>REQUEST STATUS</th>
-                            <th>RESULT STATUS</th>
-                            <th>PIC</th>
-                        </tr>
-                    </thead>
-                    
-                    <tbody class ="table" id="tableRfm">
-                        
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    
-    var ctx_ = document.getElementById("myChart2").getContext("2d");
-    var data_ = {
-        labels: [
-            <?php
-                foreach($problemTypeList as $r):
-                    $data = array();
-                    $data = $r->problem_type;
-                    echo json_encode($data).",";
-                endforeach;
-            ?>
-        ],
-        datasets:
-        [{
-            data: [
-                <?php
-                    foreach($problemTypeList as $r):
-                        $data = array();
-                        $counter = 0;
-                        foreach($rfmList as $eachrfm):
-                            if ($eachrfm->problem_type == $r->id) {
-                                $counter += 1;
-                            }
-                        endforeach;
-                        $data = $counter;
-                        echo json_encode($data).",";
-                    endforeach;
-                ?>
-            ],
-            backgroundColor: [
-                "rgb(240, 185, 185)",
-                "rgb(192, 209, 157)",
-                "rgb(247, 217, 121)",
-                "rgb(147, 230, 218)",
-                "rgb(240, 203, 161)",
-                "rgb(247, 183, 166)",
-                "rgb(219, 162, 199)",
-                "rgb(141, 207, 136)",
-                "rgb(209, 118, 88)",
-                "rgb(163, 163, 163)",
-                "rgb(247, 201, 89)",
-                "rgb(68, 124, 158)",
-                "rgb(78, 245, 197)",
-                "rgb(158, 143, 186)",
-                "rgb(250, 187, 135)",
-                "rgb(247, 227, 126)",
-                "rgb(247, 197, 188)",
-                "rgb(166, 88, 86)",
-                "rgb(247, 205, 181)",
-                "rgb(255, 203, 134)",
-                "rgb(201, 197, 143)",
-                "rgb(240, 185, 185)",
-                "rgb(192, 209, 157)",
-                "rgb(247, 217, 121)",
-                "rgb(147, 230, 218)",
-                "rgb(240, 203, 161)",
-                "rgb(247, 183, 166)",
-                "rgb(219, 162, 199)",
-                "rgb(141, 207, 136)",
-                "rgb(209, 118, 88)",
-                "rgb(163, 163, 163)",
-                ],
-                hoverBackgroundColor: 'rgb(187,185,190)',
-                hoverBorderColor: 'rgb(0, 0, 0, 1)',
-        }]
-    };
-    var myBarChartProblemType = new Chart(ctx_, {
-        type: 'pie',
-        data: data_,
-        options: {
-            legend: {
-                display: false
-            },
-            'onClick' : function (evt, item) {
-                $('#tablePTrfm').empty();
-                
-                var label = this.data.labels[item[0]["_index"]];
-                var problem_type_id;
-                var rfmList = <?php echo json_encode($rfmList); ?>;
-                var userList = <?php echo json_encode($userList); ?>;
-                var problemTypeList = <?php echo json_encode($problemTypeList); ?>;
-
-                problemTypeList.forEach( (problem) => {
-                    if (label == problem.problem_type) {
-                        problem_type_id = problem.id;
-                    }
-                })
-                
-                rfmList.forEach( (rfm) => {
-                    if (rfm.problem_type == problem_type_id) {
-                        var nama_requestor;
-                        var jabatan_requestor;
-                        var nama_pic = "-";
-                        var date = new Date(rfm.request_date);
-                        var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
-                        var problem_type;
-                        userList.forEach( (user) => {
-                            if (rfm.request_by == user.user_id) {
-                                nama_requestor = user.nama;
-                                jabatan_requestor = user.jabatan;
-                            }
-
-                            if (rfm.assign_to == user.user_id) {
-                                nama_pic = user.nama;
-                            }
-                        })
-
-                        $('#tablePTrfm').append(`
-                            <tr>
-                                <td>
-                                    ${nama_requestor}
-                                </td>
-                                <td>
-                                    ${jabatan_requestor}
-                                </td>
-                                <td>
-                                    ${rfm.no_rfm}
-                                </td>
-                                <td>
-                                    ${formattedDate}
-                                </td>
-                                <td>
-                                    ${rfm.request_status}
-                                </td>
-                                <td>
-                                    ${rfm.result_status}
-                                </td>
-                                <td>
-                                    ${nama_pic}
-                                </td>
-                            </tr>
-                        `);
-
-                    }
-                })
-
-                $('#modal-Chart2').modal('show');
-
-            }, 
-            responsive: true,
-            title:{
-                display:true,
-                text:'Problem Type Chart | Total RFM : <?php echo $jmlah_rfm;?>'
-            },
-            tooltips: {
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                    var dataLabel = data.labels[tooltipItem.index];
-                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
-
-                    if (Chart.helpers.isArray(dataLabel)) {
-                        dataLabel = dataLabel.slice();
-                        dataLabel[0] += value;
-                    } else {
-                        dataLabel += value;
-                    }
-
-                    // return the text to display on the tooltip
-                    return dataLabel;
-                    }
-                }
-            }
-        }
-    });
-
-</script>
-
-<div class="modal fade" id="modal-Chart2" role="dialog">
-    <div class="modal-dialog modal-lg" style="margin-left: 180px">
-        <div class="modal-content" style="width:1000px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Detail Problem Type</h3>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-
-            <div class="modal-body">
-                <table style="margin-left: auto; margin-right: auto">
-                    <thead class ="table">
-                        <tr>
-                            <th>REQUEST BY</th>
-                            <th>JABATAN</th>
-                            <th>NO.RFM</th>
-                            <th>DATE</th>
-                            <th>REQUEST STATUS</th>
-                            <th>RESULT STATUS</th>
-                            <th>PIC</th>
-                        </tr>
-                    </thead>
-                    
-                    <tbody class ="table" id="tablePTrfm">
-                        
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    <?php
-        $this->db->where('request_status !=', STT_ON_QUEUE);
-        $this->db->where('request_status !=', STT_REJECT);
-        if(!empty($post_monthAwal && $post_monthAkhir)) {
-            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
-            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
-            $this->db->where("YEAR(request_date)", $val_tahun);
-        }
-        $this->db->join(TB_PROJECT." as Project", "Project.id = rfp_new_detail.project_id");
-        $rfpList = $this->db->get(TB_RFP)->result();
-
-        $this->db->select("COUNT(*) AS jmlh_rfp");
-        $this->db->where('request_status !=', STT_ON_QUEUE);
-        $this->db->where('request_status !=', STT_REJECT);
-        if(!empty($post_monthAwal && $post_monthAkhir)) {
-            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
-            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
-            $this->db->where("YEAR(request_date)", $val_tahun);
-        }
-        $jmlah_rfp = $this->db->get(TB_RFP)->row()->jmlh_rfp;
-    ?>
-
-    var ctx_ = document.getElementById("myChart3").getContext("2d");
-    var data_ = {
-        labels: [
-            <?php
-                foreach($applicationList as $r):
-                    $data = array();
-                    $data = $r->project_name;
-                    echo json_encode($data).",";
-                endforeach;
-            ?>
-        ],
-        datasets:
-        [{
-            data: [
-                <?php
-                    foreach($applicationList as $r):
-                        $data = array();
-                        $counter = 0;
-                        foreach($rfpList as $eachrfp):
-                            if ($eachrfp->project_id == $r->id) {
-                                $counter += 1;
-                            }
-                        endforeach;
-                        $data = $counter;
+                        $data = $r->total_by_kk;
                         echo json_encode($data).",";
                     endforeach;
                 ?>
@@ -738,28 +323,32 @@
                 display: false
             },
             'onClick' : function (evt, item) {
-                $('#tableRfp').empty();
+                $('#table_kode_kantor').empty();
+                
                 var label = this.data.labels[item[0]["_index"]];
-                var rfpList = <?php echo json_encode($rfpList); ?>;
+                var rfmList = <?php echo json_encode($rfmList); ?>;
                 var userList = <?php echo json_encode($userList); ?>;
 
-                rfpList.forEach( (rfp) => {
-                    if (rfp.project_name == label) {
+                rfmList.forEach( (rfm) => {
+                    if (rfm.nama_kantor == label) {
                         var nama_requestor;
                         var jabatan_requestor;
                         var nama_pic = "-";
-                        var date = new Date(rfp.request_date);
+                        var date = new Date(rfm.request_date);
                         var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
 
                         userList.forEach( (user) => {
-                            if (rfp.request_by == user.user_id) {
+                            if (rfm.request_by == user.user_id) {
                                 nama_requestor = user.nama;
                                 jabatan_requestor = user.jabatan;
                             }
+
+                            if (rfm.assign_to == user.user_id) {
+                                nama_pic = user.nama;
+                            }
                         })
 
-
-                        $('#tableRfp').append(`
+                        $('#table_kode_kantor').append(`
                             <tr>
                                 <td>
                                     ${nama_requestor}
@@ -768,16 +357,19 @@
                                     ${jabatan_requestor}
                                 </td>
                                 <td>
-                                    ${rfp.no_rfp}
+                                    ${rfm.no_rfm}
                                 </td>
                                 <td>
                                     ${formattedDate}
                                 </td>
                                 <td>
-                                    ${rfp.request_status}
+                                    ${rfm.request_status}
                                 </td>
                                 <td>
-                                    ${rfp.result_status}
+                                    ${rfm.result_status}
+                                </td>
+                                <td>
+                                    ${nama_pic}
                                 </td>
                             </tr>
                         `);
@@ -785,19 +377,18 @@
                     }
                 })
 
-                $('#modal-Chart3').modal('show');
-
+                $('#modal-Chart5').modal('show');
             },
             responsive: true,
             title:{
                 display:true,
-                text:' Application Chart | Total RFP : <?php echo $jmlah_rfp;?>'
+                text:'RFM Chart'
             },
             tooltips: {
                 callbacks: {
                     label: function(tooltipItem, data) {
                     var dataLabel = data.labels[tooltipItem.index];
-                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfpList)?> * 100).toLocaleString()+'%';
+                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
                     if (Chart.helpers.isArray(dataLabel)) {
                         dataLabel = dataLabel.slice();
                         dataLabel[0] += value;
@@ -813,11 +404,11 @@
 
 </script>
 
-<div class="modal fade" id="modal-Chart3" role="dialog">
-    <div class="modal-dialog modal-lg" style="margin-left: 225px">
-        <div class="modal-content" style="width: 900px;">
+<div class="modal fade" id="modal-Chart5" role="dialog">
+    <div class="modal-dialog modal-lg" style="margin-left: 180px">
+        <div class="modal-content" style="width:1000px;">
             <div class="modal-header">
-                <h3 class="modal-title">Detail RFP</h3>
+                <h3 class="modal-title">Detail RFM Berdasarkan Kantor</h3>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
@@ -831,10 +422,11 @@
                             <th>DATE</th>
                             <th>REQUEST STATUS</th>
                             <th>RESULT STATUS</th>
+                            <th>PIC</th>
                         </tr>
                     </thead>
                     
-                    <tbody class ="table" id="tableRfp">
+                    <tbody class ="table" id="table_kode_kantor">
                         
                     </tbody>
                 </table>
@@ -845,13 +437,27 @@
 
 <script>
 
-    var ctx_ = document.getElementById("myChart4").getContext("2d");
+    <?php   
+        $this->db->select("COUNT(rfm_new_detail.kode_kantor) AS total_by_area, view_app_kode_kantor.kode_area AS kode_area");
+        $this->db->join(TB_KODE_KANTOR." as view_app_kode_kantor", "view_app_kode_kantor.kode_kantor = rfm_new_detail.kode_kantor");
+        $this->db->where('request_status !=', STT_ON_QUEUE);
+        $this->db->where('request_status !=', STT_REJECT);
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(request_date)", $val_tahun);
+        }
+        $this->db->group_by('view_app_kode_kantor.kode_area');
+        $rfmGrouped = $this->db->get(TB_DETAIL)->result();
+    ?>
+
+    var ctx_ = document.getElementById("myChart6").getContext("2d");
     var data_ = {
         labels: [
-            <?php
-                foreach($problemTypeList as $r):
+            <?php 
+                foreach($rfmGrouped as $r):
                     $data = array();
-                    $data = $r->problem_type;
+                    $data = $r->kode_area;
                     echo json_encode($data).",";
                 endforeach;
             ?>
@@ -860,15 +466,9 @@
         [{
             data: [
                 <?php
-                    foreach($problemTypeList as $r):
+                    foreach($rfmGrouped as $r):
                         $data = array();
-                        $counter = 0;
-                        foreach($rfpList as $eachrfp):
-                            if ($eachrfp->problem_type == $r->id) {
-                                $counter += 1;
-                            }
-                        endforeach;
-                        $data = $counter;
+                        $data = $r->total_by_area;
                         echo json_encode($data).",";
                     endforeach;
                 ?>
@@ -910,7 +510,7 @@
                 hoverBorderColor: 'rgb(0, 0, 0, 1)',
         }]
     };
-    var myBarChartProblemType = new Chart(ctx_, {
+    var myBarChartApplication = new Chart(ctx_, {
         type: 'pie',
         data: data_,
         options: {
@@ -918,37 +518,443 @@
                 display: false
             },
             'onClick' : function (evt, item) {
-                $('#tablePTrfp').empty();
+                $('#table_kode_area').empty();
                 
                 var label = this.data.labels[item[0]["_index"]];
-                var problem_type_id;
-                var rfpList = <?php echo json_encode($rfpList); ?>;
+                var rfmList = <?php echo json_encode($rfmList); ?>;
                 var userList = <?php echo json_encode($userList); ?>;
-                var problemTypeList = <?php echo json_encode($problemTypeList); ?>;
 
-                problemTypeList.forEach( (problem) => {
-                    if (label == problem.problem_type) {
-                        problem_type_id = problem.id;
+                rfmList.forEach( (rfm) => {
+                    if (rfm.kode_area == label) {
+                        var nama_requestor;
+                        var jabatan_requestor;
+                        var nama_pic = "-";
+                        var date = new Date(rfm.request_date);
+                        var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
+
+                        userList.forEach( (user) => {
+                            if (rfm.request_by == user.user_id) {
+                                nama_requestor = user.nama;
+                                jabatan_requestor = user.jabatan;
+                            }
+
+                            if (rfm.assign_to == user.user_id) {
+                                nama_pic = user.nama;
+                            }
+                        })
+
+                        $('#table_kode_area').append(`
+                            <tr>
+                                <td>
+                                    ${nama_requestor}
+                                </td>
+                                <td>
+                                    ${jabatan_requestor}
+                                </td>
+                                <td>
+                                    ${rfm.no_rfm}
+                                </td>
+                                <td>
+                                    ${formattedDate}
+                                </td>
+                                <td>
+                                    ${rfm.request_status}
+                                </td>
+                                <td>
+                                    ${rfm.result_status}
+                                </td>
+                                <td>
+                                    ${nama_pic}
+                                </td>
+                            </tr>
+                        `);
+
                     }
                 })
 
-                rfpList.forEach( (rfp) => {
-                    if (rfp.problem_type == problem_type_id) {
+                $('#modal-Chart6').modal('show');
+            },
+            responsive: true,
+            title:{
+                display:true,
+                text:'RFM Chart'
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                    var dataLabel = data.labels[tooltipItem.index];
+                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
+                    if (Chart.helpers.isArray(dataLabel)) {
+                        dataLabel = dataLabel.slice();
+                        dataLabel[0] += value;
+                    } else {
+                        dataLabel += value;
+                    }
+                    return dataLabel;
+                    }
+                }
+            }
+        }
+    });
+
+</script>
+
+<div class="modal fade" id="modal-Chart6" role="dialog">
+    <div class="modal-dialog modal-lg" style="margin-left: 180px">
+        <div class="modal-content" style="width:1000px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Detail RFM Berdasarkan Area</h3>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <table style="margin-left: auto; margin-right: auto">
+                    <thead class ="table">
+                        <tr>
+                            <th>REQUEST BY</th>
+                            <th>JABATAN</th>
+                            <th>NO.RFM</th>
+                            <th>DATE</th>
+                            <th>REQUEST STATUS</th>
+                            <th>RESULT STATUS</th>
+                            <th>PIC</th>
+                        </tr>
+                    </thead>
+                    
+                    <tbody class ="table" id="table_kode_area">
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    <?php 
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(request_date)", $val_tahun);
+        }
+        $rfmList = $this->db->join(TB_USER, TB_USER.".user_id=".TB_DETAIL.".request_by")->where('request_status !=', STT_ON_QUEUE)->where('request_status !=', STT_REJECT)->get(TB_DETAIL)->result();
+
+        $this->db->select("COUNT(view_user.divisi_id) AS total_by_div, view_user.divisi_id AS divisi");
+        $this->db->join('view_user', 'view_user.user_id = ticket_support.rfm_new_detail.request_by');
+        $this->db->where('ticket_support.rfm_new_detail.request_status !=', STT_ON_QUEUE);
+        $this->db->where('ticket_support.rfm_new_detail.request_status !=', STT_REJECT);
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(ticket_support.rfm_new_detail.request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(ticket_support.rfm_new_detail.request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(ticket_support.rfm_new_detail.request_date)", $val_tahun);
+        }
+        $this->db->group_by('view_user.divisi_id');
+        $this->db->order_by('view_user.divisi_id', 'asc');
+        $groupedByDivision = $this->db->get(TB_DETAIL)->result();
+    ?>
+
+    var ctx_ = document.getElementById("myChart7").getContext("2d");
+    var data_ = {
+        labels: [
+            <?php 
+                foreach($groupedByDivision as $r):
+                    $data = array();
+                    $data = $r->divisi;
+                    echo json_encode($data).",";
+                endforeach;
+            ?>
+        ],
+        datasets:
+        [{
+            data: [
+                <?php
+                    foreach($groupedByDivision as $r):
+                        $data = array();
+                        
+                        $data = $r->total_by_div;
+                        echo json_encode($data).",";
+                    endforeach;
+                ?>
+            ],
+            backgroundColor: [
+                "rgb(240, 185, 185)",
+                "rgb(192, 209, 157)",
+                "rgb(247, 217, 121)",
+                "rgb(147, 230, 218)",
+                "rgb(240, 203, 161)",
+                "rgb(247, 183, 166)",
+                "rgb(219, 162, 199)",
+                "rgb(141, 207, 136)",
+                "rgb(209, 118, 88)",
+                "rgb(163, 163, 163)",
+                "rgb(247, 201, 89)",
+                "rgb(68, 124, 158)",
+                "rgb(78, 245, 197)",
+                "rgb(158, 143, 186)",
+                "rgb(250, 187, 135)",
+                "rgb(247, 227, 126)",
+                "rgb(247, 197, 188)",
+                "rgb(166, 88, 86)",
+                "rgb(247, 205, 181)",
+                "rgb(255, 203, 134)",
+                "rgb(201, 197, 143)",
+                "rgb(240, 185, 185)",
+                "rgb(192, 209, 157)",
+                "rgb(247, 217, 121)",
+                "rgb(147, 230, 218)",
+                "rgb(240, 203, 161)",
+                "rgb(247, 183, 166)",
+                "rgb(219, 162, 199)",
+                "rgb(141, 207, 136)",
+                "rgb(209, 118, 88)",
+                "rgb(163, 163, 163)",
+                ],
+                hoverBackgroundColor: 'rgb(187,185,190)',
+                hoverBorderColor: 'rgb(0, 0, 0, 1)',
+        }]
+    };
+    var myBarChartApplication = new Chart(ctx_, {
+        type: 'pie',
+        data: data_,
+        options: {
+            legend: {
+                display: false
+            },
+            'onClick' : function (evt, item) {
+                $('#tablerfm_divisi').empty();
+                
+                var label = this.data.labels[item[0]["_index"]];
+                var rfmList = <?php echo json_encode($rfmList); ?>;
+                var userList = <?php echo json_encode($userList); ?>;
+
+                rfmList.forEach( (rfm) => {
+                    if (rfm.divisi_id == label) {
                         var nama_requestor;
                         var jabatan_requestor;
+                        var nama_pic = "-";
+                        var date = new Date(rfm.request_date);
+                        var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
+
+                        userList.forEach( (user) => {
+                            if (rfm.request_by == user.user_id) {
+                                nama_requestor = user.nama;
+                                jabatan_requestor = user.jabatan;
+                            }
+
+                            if (rfm.assign_to == user.user_id) {
+                                nama_pic = user.nama;
+                            }
+                        })
+
+                        $('#tablerfm_divisi').append(`
+                            <tr>
+                                <td>
+                                    ${nama_requestor}
+                                </td>
+                                <td>
+                                    ${jabatan_requestor}
+                                </td>
+                                <td>
+                                    ${rfm.no_rfm}
+                                </td>
+                                <td>
+                                    ${formattedDate}
+                                </td>
+                                <td>
+                                    ${rfm.request_status}
+                                </td>
+                                <td>
+                                    ${rfm.result_status}
+                                </td>
+                                <td>
+                                    ${nama_pic}
+                                </td>
+                            </tr>
+                        `);
+
+                    }
+                })
+
+                $('#modal-Chart7').modal('show');
+            },
+            responsive: true,
+            title:{
+                display:true,
+                text:'RFM Chart'
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                    var dataLabel = data.labels[tooltipItem.index];
+                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
+                    if (Chart.helpers.isArray(dataLabel)) {
+                        dataLabel = dataLabel.slice();
+                        dataLabel[0] += value;
+                    } else {
+                        dataLabel += value;
+                    }
+                    return dataLabel;
+                    }
+                }
+            }
+        }
+    });
+
+</script>
+
+<div class="modal fade" id="modal-Chart7" role="dialog">
+    <div class="modal-dialog modal-lg" style="margin-left: 180px">
+        <div class="modal-content" style="width:1000px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Detail RFM Berdasarkan Divisi</h3>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <table style="margin-left: auto; margin-right: auto">
+                    <thead class ="table">
+                        <tr>
+                            <th>REQUEST BY</th>
+                            <th>JABATAN</th>
+                            <th>NO.RFM</th>
+                            <th>DATE</th>
+                            <th>REQUEST STATUS</th>
+                            <th>RESULT STATUS</th>
+                            <th>PIC</th>
+                        </tr>
+                    </thead>
+                    
+                    <tbody class ="table" id="tablerfm_divisi">
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    <?php 
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(request_date)", $val_tahun);
+        }
+        $rfpList = $this->db->join(TB_USER, TB_USER.".user_id=".TB_RFP.".request_by")->where('request_status !=', STT_ON_QUEUE)->where('request_status !=', STT_REJECT)->get(TB_RFP)->result();
+
+        $this->db->select("COUNT(view_user.divisi_id) AS total_by_div, view_user.divisi_id AS divisi");
+        $this->db->join('view_user', 'view_user.user_id = ticket_support.rfp_new_detail.request_by');
+        $this->db->where('ticket_support.rfp_new_detail.request_status !=', STT_ON_QUEUE);
+        $this->db->where('ticket_support.rfp_new_detail.request_status !=', STT_REJECT);
+
+        if(!empty($post_monthAwal && $post_monthAkhir)) {
+            $this->db->where("MONTH(ticket_support.rfp_new_detail.request_date) >=", $post_monthAwal);
+            $this->db->where("MONTH(ticket_support.rfp_new_detail.request_date) <=", $post_monthAkhir);
+            $this->db->where("YEAR(ticket_support.rfp_new_detail.request_date)", $val_tahun);
+        }
+        $this->db->group_by('view_user.divisi_id');
+        $this->db->order_by('view_user.divisi_id', 'asc');
+
+        $groupedByDivision = $this->db->get(TB_RFP)->result();
+    ?>
+
+    var ctx_ = document.getElementById("myChart8").getContext("2d");
+    var data_ = {
+        labels: [
+            <?php 
+                foreach($groupedByDivision as $r):
+                    $data = array();
+                    $data = $r->divisi;
+                    echo json_encode($data).",";
+                endforeach;
+            ?>
+        ],
+        datasets:
+        [{
+            data: [
+                <?php
+                    foreach($groupedByDivision as $r):
+                        $data = array();
+                        
+                        $data = $r->total_by_div;
+                        echo json_encode($data).",";
+                    endforeach;
+                ?>
+            ],
+            backgroundColor: [
+                "rgb(240, 185, 185)",
+                "rgb(192, 209, 157)",
+                "rgb(247, 217, 121)",
+                "rgb(147, 230, 218)",
+                "rgb(240, 203, 161)",
+                "rgb(247, 183, 166)",
+                "rgb(219, 162, 199)",
+                "rgb(141, 207, 136)",
+                "rgb(209, 118, 88)",
+                "rgb(163, 163, 163)",
+                "rgb(247, 201, 89)",
+                "rgb(68, 124, 158)",
+                "rgb(78, 245, 197)",
+                "rgb(158, 143, 186)",
+                "rgb(250, 187, 135)",
+                "rgb(247, 227, 126)",
+                "rgb(247, 197, 188)",
+                "rgb(166, 88, 86)",
+                "rgb(247, 205, 181)",
+                "rgb(255, 203, 134)",
+                "rgb(201, 197, 143)",
+                "rgb(240, 185, 185)",
+                "rgb(192, 209, 157)",
+                "rgb(247, 217, 121)",
+                "rgb(147, 230, 218)",
+                "rgb(240, 203, 161)",
+                "rgb(247, 183, 166)",
+                "rgb(219, 162, 199)",
+                "rgb(141, 207, 136)",
+                "rgb(209, 118, 88)",
+                "rgb(163, 163, 163)",
+                ],
+                hoverBackgroundColor: 'rgb(187,185,190)',
+                hoverBorderColor: 'rgb(0, 0, 0, 1)',
+        }]
+    };
+    var myBarChartApplication = new Chart(ctx_, {
+        type: 'pie',
+        data: data_,
+        options: {
+            legend: {
+                display: false
+            },
+            'onClick' : function (evt, item) {
+                $('#tablerfp_divisi').empty();
+                
+                var label = this.data.labels[item[0]["_index"]];
+                var rfpList = <?php echo json_encode($rfpList); ?>;
+                var userList = <?php echo json_encode($userList); ?>;
+
+                rfpList.forEach( (rfp) => {
+                    if (rfp.divisi_id == label) {
+                        var nama_requestor;
+                        var jabatan_requestor;
+                        var nama_pic = "-";
                         var date = new Date(rfp.request_date);
                         var formattedDate = `${String(date.getDate()).length == 1 ? "0"+date.getDate() : date.getDate()}-${String(date.getMonth()+1).length == 1 ? "0"+ (date.getMonth()+1) : date.getMonth()+1}-${date.getFullYear()}`;
-                        var problem_type;
 
                         userList.forEach( (user) => {
                             if (rfp.request_by == user.user_id) {
                                 nama_requestor = user.nama;
                                 jabatan_requestor = user.jabatan;
                             }
+
+                            if (rfp.assign_to == user.user_id) {
+                                nama_pic = user.nama;
+                            }
                         })
 
 
-                        $('#tablePTrfp').append(`
+                        $('#tablerfp_divisi').append(`
                             <tr>
                                 <td>
                                     ${nama_requestor}
@@ -968,48 +974,46 @@
                                 <td>
                                     ${rfp.result_status}
                                 </td>
+                                <td>
+                                    ${nama_pic}
+                                </td>
                             </tr>
                         `);
 
                     }
                 })
 
-                $('#modal-Chart4').modal('show');
-
-            }, 
+                $('#modal-Chart8').modal('show');
+            },
             responsive: true,
             title:{
                 display:true,
-                text:'Request Type Chart | Total RFP : <?php echo $jmlah_rfp;?>'
+                text:'RFP Chart'
             },
             tooltips: {
                 callbacks: {
                     label: function(tooltipItem, data) {
                     var dataLabel = data.labels[tooltipItem.index];
-                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfpList)?> * 100).toLocaleString()+'%';
-
+                    var value = `: ${data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]} | ` + (data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / <?php echo count($rfmList)?> * 100).toLocaleString()+'%';
                     if (Chart.helpers.isArray(dataLabel)) {
                         dataLabel = dataLabel.slice();
                         dataLabel[0] += value;
                     } else {
                         dataLabel += value;
                     }
-
-                    // return the text to display on the tooltip
                     return dataLabel;
                     }
                 }
             }
         }
     });
-
 </script>
 
-<div class="modal fade" id="modal-Chart4" role="dialog">
+<div class="modal fade" id="modal-Chart8" role="dialog">
     <div class="modal-dialog modal-lg" style="margin-left: 180px">
         <div class="modal-content" style="width:1000px;">
             <div class="modal-header">
-                <h3 class="modal-title">Detail Problem Type</h3>
+                <h3 class="modal-title">Detail RFP Berdasarkan Divisi</h3>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
@@ -1019,14 +1023,15 @@
                         <tr>
                             <th>REQUEST BY</th>
                             <th>JABATAN</th>
-                            <th>NO.RFM</th>
+                            <th>NO.RFP</th>
                             <th>DATE</th>
                             <th>REQUEST STATUS</th>
                             <th>RESULT STATUS</th>
+                            <th>PIC</th>
                         </tr>
                     </thead>
                     
-                    <tbody class ="table" id="tablePTrfp">
+                    <tbody class ="table" id="tablerfp_divisi">
                         
                     </tbody>
                 </table>
@@ -1034,7 +1039,3 @@
         </div>
     </div>
 </div>
-
-
-
-

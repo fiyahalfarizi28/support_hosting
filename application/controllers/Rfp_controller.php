@@ -1680,7 +1680,7 @@ class Rfp_controller extends CI_Controller {
 	$array_crud = array(
             'table' => TB_PROJECT,
         );
-        $data['project_list'] = $this->rfm_model->get_crud($array_crud);
+        $data['project_list'] = $this->rfp_model->get_crud($array_crud);
 
 
                 $array_insert = array(
