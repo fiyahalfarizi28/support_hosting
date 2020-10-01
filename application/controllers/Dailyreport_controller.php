@@ -150,10 +150,6 @@ class Dailyreport_controller extends ci_controller{
         $status = $this->input->post('status');
         $keterangan = $this->input->post('keterangan');
         
-        if ($this->input->post('project_id') !== "") {
-            $project_id = $this->input->post('project_id');
-        }
-
         if ($this->input->post('task_id') !== "") {
             $task_id = $this->input->post('task_id');
         }

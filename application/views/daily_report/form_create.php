@@ -4,7 +4,7 @@
 </div>
 
 <div class="modal-body">
-    <form method="post" enctype="multipart/form-data" id="frm-create-task">
+    <form method="post" enctype="multipart/form-data" id="frm-create-daily">
         <div class="form-group text-primary">
             <i class="far fa-clock"></i> <?php echo date(' d-m-Y | H:i') ?>
         </div>
@@ -24,7 +24,7 @@
                 
                 <div id="collapseProject" class="panel-collapse collapse">
                     <div class="panel-body">
-                        <label for="projectList">Daftar project :</label>
+                        <label for="project_id">Daftar project :</label>
                         <select  id="project_id" class="form-control" name="project_id" style="margin-bottom: 15px">
                             <option disabled value="" selected="selected">- SELECT PROJECT -</option>
                             <?php foreach($filteredProjectList as $r): ?>

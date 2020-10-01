@@ -408,7 +408,7 @@ class Project_controller extends CI_Controller {
         $array_crud = array(
             'table' => TB_USER,
             'where' => array(
-                'jabatan' => 'IT STAFF',
+                'group_menu' => 'IT',
                 'flg_block' => 'N',
             )
         );
