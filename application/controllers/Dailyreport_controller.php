@@ -164,13 +164,13 @@ class Dailyreport_controller extends ci_controller{
 
         if ($this->input->post('notes') !== "") {
             $done_notes = $this->input->post('notes');
-        }
+    }
 
         if ($this->input->post('penyelesaian') !== "") {
             $comment = $this->input->post('penyelesaian');
         }
 
-        if(empty($project_id) && empty($rfm_id) && empty($keterangan) ) {
+        if(empty($task_id) && empty($rfm_id) && empty($keterangan) ) {
             $isValid = 0;
             $isPesan = "<div class='alert alert-danger'>Pilih Jenis Task!!!</div>";
         } elseif(empty($status)) {
